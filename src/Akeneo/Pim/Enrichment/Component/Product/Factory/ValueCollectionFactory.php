@@ -131,6 +131,12 @@ class ValueCollectionFactory implements ValueCollectionFactoryInterface
             $codesToTypes[$attribute->code()]= $attribute->type();
         }
 
+        $codesToProperties = [];
+
+        foreach ($attributes as $attribute) {
+            $codesToProperties[$attribute->code()]= $attribute->properties();
+        }
+
         $typesToValues = [];
 
         foreach ($rawValueCollections as $productIdentifier => $rawValues) {
@@ -139,6 +145,7 @@ class ValueCollectionFactory implements ValueCollectionFactoryInterface
                     $typesToValues[$codesToTypes[$attributeCode]][$attributeCode][] = [
                         'identifier' => $productIdentifier,
                         'values' => $values,
+                        'properties' => $codesToProperties[$attributeCode]
                     ];
                 }
             }
