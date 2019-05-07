@@ -1,24 +1,22 @@
 <?php
-
 declare(strict_types=1);
 
-namespace Akeneo\Channel\Bundle\Doctrine\Saver;
+namespace Akeneo\Channel\Bundle\Storage\Orm;
 
 use Akeneo\Channel\Component\Event\ChannelEvent;
 use Akeneo\Channel\Component\Model\ChannelInterface;
-use Akeneo\Tool\Component\StorageUtils\Saver\BulkSaverInterface;
-use Akeneo\Tool\Component\StorageUtils\Saver\SaverInterface;
+use Akeneo\Channel\Component\Saver\ChannelSaverInterface;
 use Akeneo\Tool\Component\StorageUtils\StorageEvents;
 use Doctrine\Common\Persistence\ObjectManager;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\GenericEvent;
 
 /**
- * @author Paul Chasle <paul.chasle@akeneo.com>
+ * @author    Anael Chardan <anael.chardan@akeneo.com>
  * @copyright 2019 Akeneo SAS (http://www.akeneo.com)
- * @license http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
-final class ChannelSaver implements SaverInterface, BulkSaverInterface
+final class ChannelSaver implements ChannelSaverInterface
 {
     /** @var ObjectManager */
     private $objectManager;
@@ -116,7 +114,7 @@ final class ChannelSaver implements SaverInterface, BulkSaverInterface
 
         /** @var ChannelEvent $channelEvent */
         foreach ($channelsEvents as $channelEvent) {
-            $this->eventDispatcher->dispatch($channelEvent->getName(), $channelEvent);
+            $this->eventDispatcher->dispatch($channelEvent->name(), $channelEvent);
         }
     }
 }

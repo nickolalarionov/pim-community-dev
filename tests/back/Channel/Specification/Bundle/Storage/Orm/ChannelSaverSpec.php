@@ -2,12 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Specification\Akeneo\Channel\Bundle\Doctrine\Saver;
+namespace Specification\Akeneo\Channel\Bundle\Storage\Orm;
 
 use Akeneo\Channel\Component\Event\ChannelCategoryHasBeenUpdated;
 use Akeneo\Channel\Component\Model\ChannelInterface;
-use Akeneo\Tool\Component\StorageUtils\Saver\BulkSaverInterface;
-use Akeneo\Tool\Component\StorageUtils\Saver\SaverInterface;
+use Akeneo\Channel\Component\Saver\ChannelSaverInterface;
 use Akeneo\Tool\Component\StorageUtils\StorageEvents;
 use Doctrine\Common\Persistence\ObjectManager;
 use PhpSpec\ObjectBehavior;
@@ -29,14 +28,9 @@ class ChannelSaverSpec extends ObjectBehavior
         $this->beConstructedWith($objectManager, $eventDispatcher);
     }
 
-    public function it_is_a_saver(): void
+    public function it_is_a_channel_saver(): void
     {
-        $this->shouldHaveType(SaverInterface::class);
-    }
-
-    public function it_is_a_bulk_saver(): void
-    {
-        $this->shouldHaveType(BulkSaverInterface::class);
+        $this->shouldHaveType(ChannelSaverInterface::class);
     }
 
     public function it_saves_a_channel(

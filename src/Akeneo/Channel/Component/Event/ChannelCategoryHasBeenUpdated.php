@@ -47,7 +47,7 @@ final class ChannelCategoryHasBeenUpdated extends Event implements ChannelEvent
         return $this->newCategoryCode;
     }
 
-    public function getName(): string
+    public function name(): string
     {
         return self::EVENT_NAME;
     }

@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace AkeneoTest\Pim\Channel\Integration\Channel\Doctrine\Query;
+namespace AkeneoTest\Pim\Channel\Integration\Channel\Storage\Orm;
 
 use Akeneo\Channel\Component\Model\ChannelInterface;
 use Akeneo\Channel\Component\Repository\ChannelRepositoryInterface;
+use Akeneo\Channel\Component\Saver\ChannelSaverInterface;
 use Akeneo\Pim\Enrichment\Component\Category\Model\CategoryInterface;
 use Akeneo\Pim\Enrichment\Component\Product\Query\Filter\Operators;
 use Akeneo\Test\Integration\Configuration;
 use Akeneo\Test\Integration\TestCase;
 use Akeneo\Tool\Bundle\BatchBundle\Job\JobInstanceFactory;
 use Akeneo\Tool\Component\StorageUtils\Factory\SimpleFactoryInterface;
-use Akeneo\Tool\Component\StorageUtils\Saver\SaverInterface;
 use PHPUnit\Framework\Assert;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
@@ -116,7 +116,7 @@ final class ChannelSaverIntegration extends TestCase
         return $this->get('pim_catalog.normalizer.standard.channel');
     }
 
-    private function getSaver(): SaverInterface
+    private function getSaver(): ChannelSaverInterface
     {
         return $this->get('pim_catalog.saver.channel');
     }

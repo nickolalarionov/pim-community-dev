@@ -201,15 +201,15 @@ class Channel implements ChannelInterface
      */
     public function setCategory(CategoryInterface $category)
     {
-        $previousCategoryCode = null;
+        if ($this->category === null) {
+            $this->category = $category;
 
-        if ($this->getCategory() !== null) {
-            $previousCategoryCode = $this->getCategory()->getCode();
+            return $this;
         }
 
-        $this->category = $category;
-
-        if ($previousCategoryCode !== null && $previousCategoryCode !== $category->getCode()) {
+        if ($this->category->getCode() !== $category->getCode()) {
+            $previousCategoryCode = $this->category->getCode();
+            $this->category = $category;
             $this->addEvent(new ChannelCategoryHasBeenUpdated($this->code, $previousCategoryCode, $category->getCode()));
         }
 
