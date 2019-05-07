@@ -61,7 +61,7 @@ final class ChannelSaver implements ChannelSaverInterface
             return;
         }
 
-        $data = \array_map(
+        $data = array_map(
             function (ChannelInterface $channel) use ($commonOptions) {
                 return [
                     $channel,
