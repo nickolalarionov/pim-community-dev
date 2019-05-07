@@ -6,10 +6,14 @@ namespace AkeneoTest\Pim\Channel\Integration\Channel\Doctrine\Query;
 
 use Akeneo\Channel\Component\Model\ChannelInterface;
 use Akeneo\Channel\Component\Repository\ChannelRepositoryInterface;
+use Akeneo\Pim\Enrichment\Component\Category\Model\CategoryInterface;
+use Akeneo\Pim\Enrichment\Component\Product\Query\Filter\Operators;
 use Akeneo\Test\Integration\Configuration;
 use Akeneo\Test\Integration\TestCase;
+use Akeneo\Tool\Bundle\BatchBundle\Job\JobInstanceFactory;
 use Akeneo\Tool\Component\StorageUtils\Factory\SimpleFactoryInterface;
 use Akeneo\Tool\Component\StorageUtils\Saver\SaverInterface;
+use PHPUnit\Framework\Assert;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 /**
@@ -22,7 +26,7 @@ final class ChannelSaverIntegration extends TestCase
     public function test_that_it_saves_a_new_channel(): void
     {
         $channel = $this->updateChannel(
-            $this->getFactory()->create(),
+            $this->channelFactory()->create(),
             [
                 'code' => 'mobile',
                 'locales' => ['en_US'],
@@ -57,6 +61,27 @@ final class ChannelSaverIntegration extends TestCase
         self::assertEquals($updatedNormalizedChannel, $savedNormalizedChannel);
     }
 
+    public function test_it_updates_job_instances_when_a_channel_as_a_changed_category_tree(): void
+    {
+        $this->withJobForChannelWithCategory('import', 'my_beautiful_job_instance', 'ecommerce', 'master');
+        $this->withCategory('another_category');
+        /** @var ChannelInterface $channel */
+        $channel = $this->getRepository()->findOneByIdentifier('ecommerce');
+        $this->updateChannel($channel, ['category_tree' => 'another_category']);
+        $this->getSaver()->save($channel);
+        $jobInstance = $this->get('pim_enrich.repository.job_instance')->findOneBy(['code' => 'my_beautiful_job_instance']);
+
+        if (null === $jobInstance) {
+            throw new \InvalidArgumentException('The Job instance does not exist');
+        }
+
+        $isUpdated = array_reduce($jobInstance->getRawParameters()['filters']['data'], function (bool $isUpdated , array $data) {
+            return $isUpdated || $data['field'] === 'categories' && in_array('another_category', $data['value']);
+        }, false);
+
+        Assert::assertTrue($isUpdated, 'The job instance  has not been updated');
+    }
+
     protected function getConfiguration(): Configuration
     {
         return $this->catalog->useMinimalCatalog();
@@ -76,7 +101,7 @@ final class ChannelSaverIntegration extends TestCase
         return $channel;
     }
 
-    private function getFactory(): SimpleFactoryInterface
+    private function channelFactory(): SimpleFactoryInterface
     {
         return $this->get('pim_catalog.factory.channel');
     }
@@ -94,5 +119,40 @@ final class ChannelSaverIntegration extends TestCase
     private function getSaver(): SaverInterface
     {
         return $this->get('pim_catalog.saver.channel');
+    }
+
+    private function withJobForChannelWithCategory(string $jobType, string $jobCode, string $channelCode, string $categoryCode)
+    {
+        /** @var JobInstanceFactory $jobInstanceFactory */
+        $jobInstanceFactory = $this->get('akeneo_batch.job_instance_factory');
+        $jobInstance = $jobInstanceFactory->createJobInstance($jobType);
+        $jobInstance->setRawParameters([
+            'filters' => [
+                'data' => [[
+                    'field' => 'categories',
+                    'operator' => Operators::IN_CHILDREN_LIST,
+                    'value' => [$categoryCode]
+                ]],
+                'structure' => [
+                    'scope' => $channelCode
+                ]
+            ]
+        ]);
+        $jobInstance->setJobName('csv_product_export');
+        $jobInstance->setLabel('a_label');
+        $jobInstance->setCode($jobCode);
+        $jobInstance->setConnector('a_connector');
+        $jobInstanceValidator = $this->get('validator');
+
+        $violations = $jobInstanceValidator->validate($jobInstance);
+        if (count($violations) > 0) {
+            throw new \InvalidArgumentException((string)$violations);
+        }
+        $this->get('akeneo_batch.saver.job_instance')->save($jobInstance);
+    }
+
+    private function withCategory(string $categoryCode): CategoryInterface
+    {
+        return $this->createCategory(['code' => $categoryCode, 'parent' => null]);
     }
 }

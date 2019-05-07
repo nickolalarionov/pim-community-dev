@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace Akeneo\Channel\Bundle\Doctrine\Saver;
 
-use Akeneo\Channel\Component\Event\ChannelCategoryHasBeenUpdated;
+use Akeneo\Channel\Component\Event\ChannelEvent;
 use Akeneo\Channel\Component\Model\ChannelInterface;
-use Akeneo\Channel\Component\Query\Channel\FindChannelCategoryCodeInterface;
 use Akeneo\Tool\Component\StorageUtils\Saver\BulkSaverInterface;
 use Akeneo\Tool\Component\StorageUtils\Saver\SaverInterface;
 use Akeneo\Tool\Component\StorageUtils\StorageEvents;
@@ -27,17 +26,12 @@ final class ChannelSaver implements SaverInterface, BulkSaverInterface
     /** @var EventDispatcherInterface */
     private $eventDispatcher;
 
-    /** @var FindChannelCategoryCodeInterface */
-    private $findChannelCategoryCode;
-
     public function __construct(
         ObjectManager $objectManager,
-        EventDispatcherInterface $eventDispatcher,
-        FindChannelCategoryCodeInterface $findChannelCategoryCode
+        EventDispatcherInterface $eventDispatcher
     ) {
         $this->objectManager = $objectManager;
         $this->eventDispatcher = $eventDispatcher;
-        $this->findChannelCategoryCode = $findChannelCategoryCode;
     }
 
     /**
@@ -74,7 +68,7 @@ final class ChannelSaver implements SaverInterface, BulkSaverInterface
                 return [
                     $channel,
                     \array_merge($commonOptions, ['is_new' => null === $channel->getId()]),
-                    $this->isChannelCategoryUpdated($channel->getCode(), $channel->getCategory()->getCode()),
+                    $channel->popEvents()
                 ];
             },
             $channels
@@ -112,26 +106,17 @@ final class ChannelSaver implements SaverInterface, BulkSaverInterface
             );
         }
 
-        foreach ($data as [$channel, , $channelCategoryUpdated]) {
-            if (true === $channelCategoryUpdated) {
-                $this->eventDispatcher->dispatch(
-                    ChannelCategoryHasBeenUpdated::EVENT_NAME,
-                    new ChannelCategoryHasBeenUpdated(
-                        $channel->getCode(),
-                        $channel->getCategory()->getCode()
-                    )
-                );
-            }
-        }
-    }
+        $channelsEvents = [];
 
-    private function isChannelCategoryUpdated(string $channelCode, string $newCategoryCode): bool
-    {
-        $currentCategoryCode = ($this->findChannelCategoryCode)($channelCode);
-        if (null === $currentCategoryCode) {
-            return false;
+        foreach ($data as [, , $channelEvents]) {
+            $channelsEvents[] = $channelEvents;
         }
 
-        return $currentCategoryCode !== $newCategoryCode;
+        $channelsEvents = array_merge(...$channelsEvents);
+
+        /** @var ChannelEvent $channelEvent */
+        foreach ($channelsEvents as $channelEvent) {
+            $this->eventDispatcher->dispatch($channelEvent->getName(), $channelEvent);
+        }
     }
 }

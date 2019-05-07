@@ -86,7 +86,6 @@ services:
         arguments:
             - '@doctrine.orm.entity_manager'
             - '@event_dispatcher'
-            - '@akeneo_channel.infrastructure.persistence.query.find_channel_category_code'
 
     pim_catalog.repository.channel:
         class: 'Akeneo\Channel\Bundle\Doctrine\Repository\ChannelRepository'

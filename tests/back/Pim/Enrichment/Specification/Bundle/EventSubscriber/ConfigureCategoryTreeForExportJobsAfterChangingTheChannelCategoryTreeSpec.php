@@ -95,7 +95,7 @@ class ConfigureCategoryTreeForExportJobsAfterChangingTheChannelCategoryTreeSpec 
 
         $jobInstanceSaver->saveAll([$jobInstance])->shouldBeCalled();
 
-        $event = new ChannelCategoryHasBeenUpdated('channel_code', 'other_category_code');
+        $event = new ChannelCategoryHasBeenUpdated('channel_code', 'previous-category-code', 'other_category_code');
         $this->onChannelCategoryHasBeenUpdatedEvent($event);
     }
 }

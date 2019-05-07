@@ -2,6 +2,8 @@
 
 namespace Akeneo\Channel\Component\Model;
 
+use Akeneo\Channel\Component\Event\ChannelCategoryHasBeenUpdated;
+use Akeneo\Channel\Component\Event\ChannelEvent;
 use Akeneo\Pim\Enrichment\Component\Category\Model\CategoryInterface;
 use Akeneo\Tool\Component\Localization\Model\TranslationInterface;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -43,6 +45,9 @@ class Channel implements ChannelInterface
 
     /** @var array $conversionUnits */
     protected $conversionUnits = [];
+
+    /** @var array|ChannelEvent[] */
+    private $events = [];
 
     public function __construct()
     {
@@ -196,7 +201,17 @@ class Channel implements ChannelInterface
      */
     public function setCategory(CategoryInterface $category)
     {
+        $previousCategoryCode = null;
+
+        if ($this->getCategory() !== null) {
+            $previousCategoryCode = $this->getCategory()->getCode();
+        }
+
         $this->category = $category;
+
+        if ($previousCategoryCode !== null && $previousCategoryCode !== $category->getCode()) {
+            $this->addEvent(new ChannelCategoryHasBeenUpdated($this->code, $previousCategoryCode, $category->getCode()));
+        }
 
         return $this;
     }
@@ -355,5 +370,21 @@ class Channel implements ChannelInterface
     public function getReference()
     {
         return $this->code;
+    }
+
+    /**
+     * @return array|ChannelEvent[]
+     */
+    public function popEvents(): array
+    {
+        $events = $this->events;
+        $this->events = [];
+
+        return $events;
+    }
+
+    private function addEvent(ChannelEvent $event): void
+    {
+        $this->events[] = $event;
     }
 }
