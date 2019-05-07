@@ -65,7 +65,7 @@ final class ChannelSaver implements ChannelSaverInterface
             function (ChannelInterface $channel) use ($commonOptions) {
                 return [
                     $channel,
-                    \array_merge($commonOptions, ['is_new' => null === $channel->getId()]),
+                    array_merge($commonOptions, ['is_new' => null === $channel->getId()]),
                     $channel->popEvents()
                 ];
             },
